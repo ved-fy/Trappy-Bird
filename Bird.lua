@@ -13,7 +13,14 @@ function Bird:init()
 end
 
 function Bird:update(dt)
+    -- Apply gravity to the bird
     self.dy = self.dy + GRAVITY * dt
+
+    if love.keyboard.wasPressed('space') then
+        self.dy = -5
+    end
+
+    -- Add changes to the y value of bird
     self.y = self.y + self.dy
 end
 
