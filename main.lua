@@ -57,6 +57,9 @@ function love.update(dt)
 
     groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
         % VIRTUAL_WIDTH  
+
+    --update the bird
+    bird:update(dt)
 end
 
 function love.draw()
