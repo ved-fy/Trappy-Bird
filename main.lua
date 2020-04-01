@@ -4,6 +4,8 @@ Class = require 'class'
 
 require 'Bird'
 
+require 'Pipe'
+
 -- Actual window size
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -27,8 +29,16 @@ local BACKGROUND_LOOPING_POINT = 413
 
 local bird = Bird()
 
+-- Table to store all the pipes
+local pipes = {}
+
+-- Pipes will spawn after a time intervel. 'spawnTimer' keeps track of the time
+local spawnTimer = 0
+
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
+
+    math.randomseed(os.time())
 
     love.window.setTitle('Flappy bird')
 
@@ -69,19 +79,43 @@ function love.update(dt)
     groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
         % VIRTUAL_WIDTH  
 
+    spawnTimer = spawnTimer + dt
+
+    if spawnTimer > 2 then
+        table.insert(pipes, Pipe())
+        spawnTimer = 0
+    end
+
     --update the bird
     bird:update(dt)
 
+    for k, pipe in pairs(pipes) do
+        -- Scrolls the pipe
+        pipe:update(dt)
+
+        if pipe.x < -pipe.width then
+            table.remove(pipes, k)
+        end
+    end
     -- Resetting the input table so we can query for further key presses
     love.keyboard.keysPressed = {}
 end
 
 function love.draw()
     push:start()
+    -- Drawing in layers
+    -- Draw the background image first
     love.graphics.draw(background, -backgroundScroll, 0)
+
+    -- Drawing pipes
+    for k, pipe in pairs(pipes) do
+        pipe:render()
+    end
+
+    -- Drawing ground
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
 
-    -- Rendering bird
+    -- Drawing bird
     bird:render()
 
     push:finish()
