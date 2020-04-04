@@ -4,7 +4,11 @@ Class = require 'class'
 
 require 'Bird'
 
+-- Pipe calss we've written
 require 'Pipe'
+
+-- Class repesentation of pipe pairs together
+require 'PipePair'
 
 -- Actual window size
 WINDOW_WIDTH = 1280
@@ -30,10 +34,13 @@ local BACKGROUND_LOOPING_POINT = 413
 local bird = Bird()
 
 -- Table to store all the pipes
-local pipes = {}
+local pipePairs = {}
 
 -- Pipes will spawn after a time intervel. 'spawnTimer' keeps track of the time
 local spawnTimer = 0
+
+-- initialize our last recorded y value for a gap placement between pipes
+local lastY = -PIPE_HEIGHT + math.random(80) + 20
 
 function love.load()
     love.graphics.setDefaultFilter('nearest', 'nearest')
@@ -81,22 +88,31 @@ function love.update(dt)
 
     spawnTimer = spawnTimer + dt
 
+    -- Modify the last y coordinate where we placed the pipe
     if spawnTimer > 2 then
-        table.insert(pipes, Pipe())
+        local y = math.max(-PIPE_HEIGHT + 10,
+            math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
+        lastY = y
+
+        table.insert(pipePairs, PipePair(y))
         spawnTimer = 0
     end
 
     --update the bird
     bird:update(dt)
 
-    for k, pipe in pairs(pipes) do
-        -- Scrolls the pipe
-        pipe:update(dt)
-
-        if pipe.x < -pipe.width then
-            table.remove(pipes, k)
+    -- For every pipe in the scene
+    for k, pair in pairs(pipePairs) do
+        pair:update(dt)
+    end
+    
+    -- Remove pipes that are not seen
+    for k, pair in pairs(pipePairs) do
+        if pair.remove then
+            table.remove(pipePairs, k)
         end
     end
+
     -- Resetting the input table so we can query for further key presses
     love.keyboard.keysPressed = {}
 end
@@ -108,7 +124,7 @@ function love.draw()
     love.graphics.draw(background, -backgroundScroll, 0)
 
     -- Drawing pipes
-    for k, pipe in pairs(pipes) do
+    for k, pipe in pairs(pipePairs) do
         pipe:render()
     end
 
