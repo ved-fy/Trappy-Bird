@@ -10,6 +10,12 @@ require 'Pipe'
 -- Class repesentation of pipe pairs together
 require 'PipePair'
 
+-- All clsses related to state machines
+require 'StateMachine'
+require 'states/BaseState'
+require 'states/PlayState'
+require 'states/TitleScreenState'
+
 -- Actual window size
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -52,11 +58,25 @@ function love.load()
 
     love.window.setTitle('Flappy bird')
 
+    -- Initialising retro fonts
+    smallFont = love.graphics.newFont('font/font.ttf', 8)
+    mediumFont = love.graphics.newFont('font/flappy.ttf', 14)
+    flappyFont = love.graphics.newFont('font/flappy.ttf', 28)
+    hugeFont = love.graphics.newFont('font/flappy.ttf', 56)
+    love.graphics.setFont(flappyFont)
+
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         vsync = true,
         fullscreen = false,
         resizable = true
     })
+
+    -- Intiializing state machines with state returning functions
+    gStateMachine = StateMachine {
+        ['title'] = function() return TitleScreenState() end,
+        ['play'] = function() return PlayState() end,
+    }
+    gStateMachine:change('title')
 
     love.keyboard.keysPressed = {}
 end
@@ -81,53 +101,15 @@ function love.keyboard.wasPressed(key)
 end
 
 function love.update(dt)
-
-    if scrolling then
-        -- Adding the scroll speed to the image and the resetting to the intial point to make it look infinite
-        backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
-        % BACKGROUND_LOOPING_POINT
-
-        groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
-            % VIRTUAL_WIDTH  
+     -- Adding the scroll speed to the image and the resetting to the intial point to make it look infinite
+     backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
+     % BACKGROUND_LOOPING_POINT
+     groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
+         % VIRTUAL_WIDTH  
             
-        spawnTimer = spawnTimer + dt
+    -- update the state machine
+    gStateMachine:update(dt)    
             
-        -- Modify the last y coordinate where we placed the pipe
-        if spawnTimer > 2 then
-            local y = math.max(-PIPE_HEIGHT + 10,
-                math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
-            lastY = y
-        
-            table.insert(pipePairs, PipePair(y))
-            spawnTimer = 0
-        end
-        
-        --update the bird
-        bird:update(dt)
-        
-        -- For every pipe in the scene
-        for k, pair in pairs(pipePairs) do
-            pair:update(dt)
-
-            for l, pipe in pairs(pair.pipes) do
-                if bird:collides(pipe) then
-                    scrolling = false
-                end
-            end
-
-            if pair.x < -PIPE_WIDTH then
-                pair.remove = true
-            end
-        end
-
-        -- Remove pipes that are not seen
-        for k, pair in pairs(pipePairs) do
-            if pair.remove then
-                table.remove(pipePairs, k)
-            end
-        end
-    end
-
     -- Resetting the input table so we can query for further key presses
     love.keyboard.keysPressed = {}
 end
@@ -137,17 +119,10 @@ function love.draw()
     -- Drawing in layers
     -- Draw the background image first
     love.graphics.draw(background, -backgroundScroll, 0)
-
-    -- Drawing pipes
-    for k, pipe in pairs(pipePairs) do
-        pipe:render()
-    end
-
+    -- Render state
+    gStateMachine:render()
     -- Drawing ground
     love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
-
-    -- Drawing bird
-    bird:render()
 
     push:finish()
 end
