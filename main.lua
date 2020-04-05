@@ -115,7 +115,7 @@ function love.update(dt)
                 end
             end
 
-            if pair.x < PIPE_WIDTH then
+            if pair.x < -PIPE_WIDTH then
                 pair.remove = true
             end
         end
