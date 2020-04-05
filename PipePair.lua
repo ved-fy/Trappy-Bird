@@ -18,6 +18,9 @@ function PipePair:init(y)
 
     -- Is the pipe ready to be removed from the scene
     self.remove = false
+
+    -- Checking if we went past the pair of pipes ( equivalent to scoring )
+    self.scored = false
 end
 
 function PipePair:update(dt)
