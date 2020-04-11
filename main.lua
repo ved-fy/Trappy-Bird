@@ -9,13 +9,14 @@ require 'Pipe'
 
 -- Class repesentation of pipe pairs together
 require 'PipePair'
-
+l̥
 -- All clsses related to state machines
 require 'StateMachine'
 require 'states/BaseState'
 require 'states/PlayState'
 require 'states/TitleScreenState'
 require 'states/ScoreState'
+require 'states/CountdownState'
 
 -- Actual window size
 WINDOW_WIDTH = 1280
@@ -77,6 +78,7 @@ function love.load()
         ['title'] = function() return TitleScreenState() end,
         ['play'] = function() return PlayState() end,
         ['score'] = function() return ScoreState() end,
+        ['countdown'] = function() return CountdownState() end
     }
     gStateMachine:change('title')
 
@@ -128,4 +130,3 @@ function love.draw()
 
     push:finish()
 end
-
